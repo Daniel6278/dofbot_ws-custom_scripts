@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-#!/usr/bin/env python3
 import cv2
 import numpy as np
 
@@ -233,7 +232,8 @@ if __name__ == "__main__":
     
     print_object_points_info(object_points_3d, object_points_2d)
     
-    single_image_path = ''  # Replace with your image path
+    # One img
+    single_image_path = ''  # Replace with the image path
     img_with_corners, homography_matrix = process_single_image(
         single_image_path, object_points_3d, object_points_2d, pattern_size)
     
@@ -241,10 +241,9 @@ if __name__ == "__main__":
         print("Single image processing successful!")
         cv2.imwrite('chessboard_with_corners.jpg', img_with_corners)
     
-    """
-    Multiple img processing, need to research further
-    """
-    # image_list = ['img1.jpg', 'img2.jpg', 'img3.jpg']  # Replace with img paths
-    # camera_matrix, dist_coeffs, rvecs, tvecs = calibrate_camera_from_images(
-    #     image_list, object_points_3d, pattern_size)
-    # np.savez('camera_calibration.npz', camera_matrix=camera_matrix, dist_coeffs=dist_coeffs)
+
+    # Multiple img processing, need to research further
+    image_list = ['img1.jpg', 'img2.jpg', 'img3.jpg']  # Replace with img paths
+    camera_matrix, dist_coeffs, rvecs, tvecs = calibrate_camera_from_images(
+        image_list, object_points_3d, pattern_size)
+    np.savez('camera_calibration.npz', camera_matrix=camera_matrix, dist_coeffs=dist_coeffs) #use ai to check if the results are correct
