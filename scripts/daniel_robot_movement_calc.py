@@ -597,9 +597,7 @@ if __name__ == "__main__":
     
     # Test with sample image paths
     test_images = [
-        "chessboard1.jpg",
-        "object_detection.jpg", 
-        "test_image.jpg"
+        "object_detection_20250629_012603.jpg"
     ]
     
     # Try to find an existing image to test with
@@ -671,27 +669,16 @@ if __name__ == "__main__":
             print("1. Take a photo with both chessboard and colored blocks")
             print("2. Run: grid_matrix, block_positions, success = analyze_chessboard_with_blocks('your_image.jpg')")
             print("3. Query positions: get_block_at_position(grid_matrix, block_positions, 1, 1)")
-    
-    print("\n=== Function Usage Examples ===")
-    print("# Analyze an image:")
-    print("grid_matrix, block_positions, success = analyze_chessboard_with_blocks('image.jpg')")
-    print()
-    print("# Check what's at position (2, 3):")
-    print("block_info = get_block_at_position(grid_matrix, block_positions, 2, 3)")
-    print()
-    print("# Grid matrix values:")
-    print("# 0=empty, 1=red, 2=green, 3=blue, 4=yellow, 5=unknown")
-    print()
-    print("# Grid coordinates are 1-indexed: (1,1) to (6,9)")
+
     
     # Optional image display
-    if test_image and success:
-        print("\n=== Optional Image Display ===")
-        display_choice = input("Would you like to display the image with chessboard lines and detected blocks? (y/n): ").lower().strip()
-        
-        if display_choice in ['y', 'yes']:
-            try:
-                display_result_image(test_image, grid_matrix, block_positions)
-            except Exception as e:
-                print(f"Error displaying image: {str(e)}")
-                print("Make sure you have a display available and OpenCV is properly installed.")
+    # if test_image and success:
+    #     print("\n=== Optional Image Display ===")
+    #     display_choice = input("Would you like to display the image with chessboard lines and detected blocks? (y/n): ").lower().strip()
+    #
+    #     if display_choice in ['y', 'yes']:
+    #         try:
+    #             display_result_image(test_image, grid_matrix, block_positions)
+    #         except Exception as e:
+    #             print(f"Error displaying image: {str(e)}")
+    #             print("Make sure you have a display available and OpenCV is properly installed.")
