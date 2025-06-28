@@ -15,6 +15,10 @@ def take_photo(filename):
 
     print("Taking photo...")
 
+    # Create testing_photos directory if it doesn't exist
+    photos_dir = "testing_photos"
+    os.makedirs(photos_dir, exist_ok=True)
+    
     # Generate timestamp for unique naming
     timestamp = time.strftime("%Y%m%d_%H%M%S")
     name, ext = os.path.splitext(filename)
@@ -23,7 +27,7 @@ def take_photo(filename):
     if not ext or ext.lower() not in ['.jpg', '.jpeg', '.png', '.bmp', '.tiff']:
         ext = '.jpg'  # Default to JPG if no extension or unsupported extension
     
-    timestamped_filename = f"{name}_{timestamp}{ext}"
+    timestamped_filename = os.path.join(photos_dir, f"{name}_{timestamp}{ext}")
 
     camera = None
     try:
