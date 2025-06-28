@@ -1,30 +1,72 @@
-jetson@ubuntu:~/dofbot_ws/src/custom_scripts/scripts$ ./object_detection.py 
 === Object Detection Cycle ===
 
 Step 1: Positioning robot...
 Moving to optimal viewing position...
 Moving arm joints...
-Current state before movement: {1: 90, 2: 160, 3: 20, 4: 0, 5: 89, 6: 5}
-Target angles: [90, 100, 10, 0, 89, 5]
+Current state before movement: {1: 90, 2: 163, 3: 16, 4: 0, 5: 89, 6: 6}
+Target angles: [90, 100, 10, 0, 89, 6]
 Moving wrist and gripper...
-Current state before movement: {1: 89, 2: 100, 3: 11, 4: 0, 5: 89, 6: 5}
-Target angles: [89, 100, 11, 0, 90, 5]
+Current state before movement: {1: 107, 2: 100, 3: 10, 4: 0, 5: 89, 6: 5}
+Target angles: [107, 100, 10, 0, 90, 5]
 Robot positioned for object detection
 
 Step 2: Taking photo...
 Taking photo for object detection...
+Method 1: Trying direct camera access...
 Initializing camera...
-[ WARN:0@5.149] global cap_v4l.cpp:913 open VIDEOIO(V4L2:/dev/video0): can't open camera by index
-Successfully opened camera
-Failed to read from camera
-Error in detection cycle: Failed to take photo
-Traceback (most recent call last):
-  File "./object_detection.py", line 699, in run_detection_cycle
-    photo_path = self.take_photo("object_detection.jpg")
-  File "./object_detection.py", line 160, in take_photo
-    raise RuntimeError("Failed to take photo")
-RuntimeError: Failed to take photo
+Trying camera index 0 with backend 200
+[ WARN:0@5.150] global cap_v4l.cpp:913 open VIDEOIO(V4L2:/dev/video0): can't open camera by index
+[ WARN:0@5.150] global cap.cpp:478 open VIDEOIO(V4L2): backend is generally available but can't be used to capture by index
+Trying camera index 0 with backend 0
+[ WARN:0@5.151] global cap_v4l.cpp:913 open VIDEOIO(V4L2:/dev/video0): can't open camera by index
+Successfully opened camera with index 0
+[ WARN:0@5.499] global cap_obsensor_capture.cpp:218 setProperty Unsupported or read only property, id=3
+[ WARN:0@5.499] global cap_obsensor_capture.cpp:218 setProperty Unsupported or read only property, id=4
+[ WARN:0@5.499] global cap_obsensor_capture.cpp:218 setProperty Unsupported or read only property, id=5
+[ WARN:0@5.499] global cap_obsensor_capture.cpp:218 setProperty Unsupported or read only property, id=38
+Waiting for camera to stabilize...
+Failed to read frame 1
+Failed to read frame 2
+Failed to read frame 3
+Failed to read frame 4
+Failed to read frame 5
+Failed to read frame 6
+Failed to read frame 7
+Failed to read frame 8
+Failed to read frame 9
+Failed to read frame 10
+Camera index 0 opened but failed to read any frames
+Trying camera index 1 with backend 200
+Successfully opened camera with index 1
+Waiting for camera to stabilize...
+Successfully captured frame 1 with shape: (480, 640, 3)
+Successfully captured frame 2 with shape: (480, 640, 3)
+Photo captured successfully
+Photo saved as: object_detection_20250629_023917.jpg
+
+Step 3: Detecting objects...
+Detecting objects in image...
+
+Step 4: Saving results...
+
+=== Square Block Detection Summary ===
+✓ 5 square blocks detected
+✓ Results saved as: object_detection_result_20250629_023930.jpg
+
+Color distribution:
+  Green: 1 block(s)
+  Blue: 1 block(s)
+  Yellow: 1 block(s)
+  Unknown: 2 block(s)
+
+Detailed block information:
+  Block 1: green square at (237, 177) (area: 681, ratio: 0.97, vertices: 8, solidity: 0.84)
+  Block 2: yellow square at (204, 166) (area: 868, ratio: 1.02, vertices: 6, solidity: 0.94)
+  Block 3: blue square at (185, 215) (area: 753, ratio: 1.03, vertices: 5, solidity: 0.92)
+  Block 4: unknown square at (156, 259) (area: 509, ratio: 1.00, vertices: 4, solidity: 0.96)
+  Block 5: unknown square at (164, 165) (area: 544, ratio: 0.96, vertices: 4, solidity: 0.95)
 
 Returning to home position...
 
-✗ Detection cycle failed!
+✓ Detection cycle completed successfully!
+
