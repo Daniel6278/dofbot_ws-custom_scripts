@@ -18,6 +18,11 @@ def take_photo(filename):
     # Generate timestamp for unique naming
     timestamp = time.strftime("%Y%m%d_%H%M%S")
     name, ext = os.path.splitext(filename)
+    
+    # Ensure we have a valid image extension
+    if not ext or ext.lower() not in ['.jpg', '.jpeg', '.png', '.bmp', '.tiff']:
+        ext = '.jpg'  # Default to JPG if no extension or unsupported extension
+    
     timestamped_filename = f"{name}_{timestamp}{ext}"
 
     camera = None
