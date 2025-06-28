@@ -1,4 +1,5 @@
-def take_photo(filename="simple_photo.jpg"):
+#!/usr/bin/env python3
+def take_photo(filename):
     """
     Simple function to take a photo using camera
 
