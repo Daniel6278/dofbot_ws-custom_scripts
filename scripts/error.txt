@@ -1,0 +1,30 @@
+jetson@ubuntu:~/dofbot_ws/src/custom_scripts/scripts$ ./object_detection.py 
+=== Object Detection Cycle ===
+
+Step 1: Positioning robot...
+Moving to optimal viewing position...
+Moving arm joints...
+Current state before movement: {1: 90, 2: 160, 3: 20, 4: 0, 5: 89, 6: 5}
+Target angles: [90, 100, 10, 0, 89, 5]
+Moving wrist and gripper...
+Current state before movement: {1: 89, 2: 100, 3: 11, 4: 0, 5: 89, 6: 5}
+Target angles: [89, 100, 11, 0, 90, 5]
+Robot positioned for object detection
+
+Step 2: Taking photo...
+Taking photo for object detection...
+Initializing camera...
+[ WARN:0@5.149] global cap_v4l.cpp:913 open VIDEOIO(V4L2:/dev/video0): can't open camera by index
+Successfully opened camera
+Failed to read from camera
+Error in detection cycle: Failed to take photo
+Traceback (most recent call last):
+  File "./object_detection.py", line 699, in run_detection_cycle
+    photo_path = self.take_photo("object_detection.jpg")
+  File "./object_detection.py", line 160, in take_photo
+    raise RuntimeError("Failed to take photo")
+RuntimeError: Failed to take photo
+
+Returning to home position...
+
+✗ Detection cycle failed!

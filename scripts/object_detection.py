@@ -135,7 +135,7 @@ class ObjectDetector:
     
     def take_photo(self, filename="object_detection.jpg"):
         """
-        Take a photo using direct OpenCV camera access (optimized for Jetson)
+        Take a photo using multiple methods (direct camera access and ROS camera topics)
         
         Args:
             filename: Name of the file to save the photo (will be prefixed with timestamp)
@@ -150,56 +150,170 @@ class ObjectDetector:
         name, ext = os.path.splitext(filename)
         timestamped_filename = f"{name}_{timestamp}{ext}"
         
-        # Use direct camera access (proven to work on Jetson)
+        # Try direct camera access first
+        print("Method 1: Trying direct camera access...")
         result = self._take_photo_direct(timestamped_filename)
         
         if result:
             print(f"Photo saved as: {result}")
             return result
-        else:
-            raise RuntimeError("Failed to take photo")
+        
+        # Try ROS camera topic as fallback
+        print("Method 2: Trying ROS camera topic...")
+        result = self._take_photo_ros(timestamped_filename)
+        
+        if result:
+            print(f"Photo saved as: {result}")
+            return result
+        
+        # If both methods fail, raise error
+        raise RuntimeError("Failed to take photo with both direct camera access and ROS camera topic")
     
     def _take_photo_direct(self, filename):
         """
-        Direct OpenCV camera access method (proven to work on Jetson)
+        Robust camera access method for Jetson systems
         """
+        camera = None
         try:
             print("Initializing camera...")
             
-            # Try camera index 0 (most common)
-            camera = cv2.VideoCapture(0)
+            # Try different camera backends and indices
+            camera_configs = [
+                (0, cv2.CAP_V4L2),      # V4L2 backend with index 0
+                (0, cv2.CAP_ANY),       # Any backend with index 0
+                (1, cv2.CAP_V4L2),      # V4L2 backend with index 1
+                (1, cv2.CAP_ANY),       # Any backend with index 1
+            ]
             
-            if camera.isOpened():
-                print("Successfully opened camera")
+            for camera_index, backend in camera_configs:
+                print(f"Trying camera index {camera_index} with backend {backend}")
                 
-                # Wait for camera to stabilize
-                time.sleep(2)
+                # Create camera object with specific backend
+                camera = cv2.VideoCapture(camera_index, backend)
                 
-                # Read a frame
-                ret, image = camera.read()
-                
-                if ret and image is not None and image.size > 0:
-                    print(f"Successfully captured frame with shape: {image.shape}")
+                if camera.isOpened():
+                    print(f"Successfully opened camera with index {camera_index}")
                     
-                    # Save the image
-                    cv2.imwrite(filename, image)
+                    # Set camera properties for better compatibility
+                    camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+                    camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+                    camera.set(cv2.CAP_PROP_FPS, 30)
+                    camera.set(cv2.CAP_PROP_BUFFERSIZE, 1)
                     
-                    # Clean up
+                    # Wait for camera to stabilize
+                    print("Waiting for camera to stabilize...")
+                    time.sleep(3)
+                    
+                    # Try to read multiple frames to ensure camera is working
+                    successful_frames = 0
+                    max_attempts = 10
+                    
+                    for attempt in range(max_attempts):
+                        ret, image = camera.read()
+                        
+                        if ret and image is not None and image.size > 0:
+                            print(f"Successfully captured frame {attempt + 1} with shape: {image.shape}")
+                            successful_frames += 1
+                            
+                            # If we get a good frame, save it
+                            if successful_frames >= 2:  # Require at least 2 good frames
+                                cv2.imwrite(filename, image)
+                                print("Photo captured successfully")
+                                return filename
+                        else:
+                            print(f"Failed to read frame {attempt + 1}")
+                            time.sleep(0.5)  # Wait before next attempt
+                    
+                    if successful_frames == 0:
+                        print(f"Camera index {camera_index} opened but failed to read any frames")
+                    else:
+                        print(f"Camera index {camera_index} captured {successful_frames} frames but not enough for reliable capture")
+                
+                # Clean up and try next configuration
+                if camera is not None:
                     camera.release()
-                    cv2.destroyAllWindows()
-                    
-                    print("Photo captured successfully")
-                    return filename
-                else:
-                    print("Failed to read from camera")
-                    camera.release()
-            else:
-                print("Failed to open camera")
+                    camera = None
             
+            # If we get here, no camera configuration worked
+            print("All camera configurations failed")
             return None
             
         except Exception as e:
             print(f"Camera access error: {str(e)}")
+            return None
+        finally:
+            # Ensure camera is released
+            if camera is not None:
+                camera.release()
+                cv2.destroyAllWindows()
+    
+    def _take_photo_ros(self, filename):
+        """
+        Take photo using ROS camera topic (fallback method)
+        """
+        try:
+            import rospy
+            from sensor_msgs.msg import Image
+            from cv_bridge import CvBridge
+            
+            print("Initializing ROS camera capture...")
+            
+            # Initialize ROS node if not already done
+            try:
+                rospy.init_node('object_detection_camera', anonymous=True)
+            except:
+                pass  # Node might already be initialized
+            
+            # Create CV bridge
+            bridge = CvBridge()
+            
+            # Wait for camera topic to be available
+            print("Waiting for camera topic...")
+            try:
+                # Try common camera topics
+                camera_topics = [
+                    '/usb_cam/image_raw',
+                    '/camera/image_raw',
+                    '/camera/color/image_raw',
+                    '/camera/rgb/image_raw'
+                ]
+                
+                image_msg = None
+                for topic in camera_topics:
+                    try:
+                        print(f"Trying camera topic: {topic}")
+                        image_msg = rospy.wait_for_message(topic, Image, timeout=5.0)
+                        print(f"Successfully received image from {topic}")
+                        break
+                    except rospy.ROSException:
+                        print(f"Topic {topic} not available")
+                        continue
+                
+                if image_msg is None:
+                    print("No camera topics available")
+                    return None
+                
+                # Convert ROS message to OpenCV image
+                cv_image = bridge.imgmsg_to_cv2(image_msg, "bgr8")
+                
+                if cv_image is not None and cv_image.size > 0:
+                    print(f"Successfully converted ROS image with shape: {cv_image.shape}")
+                    cv2.imwrite(filename, cv_image)
+                    print("Photo captured successfully via ROS")
+                    return filename
+                else:
+                    print("Failed to convert ROS image")
+                    return None
+                    
+            except Exception as e:
+                print(f"ROS camera error: {str(e)}")
+                return None
+                
+        except ImportError:
+            print("ROS or cv_bridge not available, skipping ROS camera method")
+            return None
+        except Exception as e:
+            print(f"ROS camera access error: {str(e)}")
             return None
     
     def preprocess_image(self, image):
@@ -756,6 +870,65 @@ class ObjectDetector:
             self.arm_controller.move_home(2000)
             self.arm_controller.set_torque(False)
 
+    def test_camera(self):
+        """
+        Test camera functionality and list available cameras
+        """
+        print("=== Camera Test ===")
+        
+        # Test direct camera access
+        print("\n1. Testing direct camera access...")
+        for i in range(4):  # Test indices 0-3
+            print(f"\nTesting camera index {i}:")
+            camera = cv2.VideoCapture(i)
+            if camera.isOpened():
+                print(f"  ✓ Camera {i} opened successfully")
+                
+                # Try to read a frame
+                ret, frame = camera.read()
+                if ret and frame is not None:
+                    print(f"  ✓ Camera {i} can read frames (shape: {frame.shape})")
+                else:
+                    print(f"  ✗ Camera {i} opened but cannot read frames")
+                
+                camera.release()
+            else:
+                print(f"  ✗ Camera {i} failed to open")
+        
+        # Test ROS camera topics
+        print("\n2. Testing ROS camera topics...")
+        try:
+            import rospy
+            from sensor_msgs.msg import Image
+            
+            # Initialize ROS node
+            try:
+                rospy.init_node('camera_test', anonymous=True)
+            except:
+                pass
+            
+            # List available topics
+            try:
+                topics = rospy.get_published_topics()
+                camera_topics = [topic[0] for topic in topics if 'image' in topic[0].lower() or 'camera' in topic[0].lower()]
+                
+                if camera_topics:
+                    print("  Available camera-related topics:")
+                    for topic in camera_topics:
+                        print(f"    - {topic}")
+                else:
+                    print("  No camera-related topics found")
+                    
+            except Exception as e:
+                print(f"  Error listing topics: {str(e)}")
+                
+        except ImportError:
+            print("  ROS not available")
+        except Exception as e:
+            print(f"  ROS test error: {str(e)}")
+        
+        print("\n=== Camera Test Complete ===")
+
 def main():
     """Main function to run object detection"""
     parser = argparse.ArgumentParser(description='Object detection on chessboard area')
@@ -765,6 +938,8 @@ def main():
                        help='Maximum object area for detection')
     parser.add_argument('--image', type=str, default=None,
                        help='Path to existing image (if not provided, will take new photo)')
+    parser.add_argument('--test-camera', action='store_true',
+                       help='Test camera functionality without running detection')
     
     args = parser.parse_args()
     
@@ -774,6 +949,11 @@ def main():
     # Update detection parameters
     detector.min_object_area = args.min_area
     detector.max_object_area = args.max_area
+    
+    if args.test_camera:
+        # Test camera functionality
+        detector.test_camera()
+        return
     
     if args.image:
         # Analyze existing image
@@ -796,6 +976,11 @@ def main():
             print("\n✓ Detection cycle completed successfully!")
         else:
             print("\n✗ Detection cycle failed!")
+            print("\nTroubleshooting tips:")
+            print("1. Run with --test-camera to diagnose camera issues")
+            print("2. Make sure camera is connected and not in use by another process")
+            print("3. Try running 'ls /dev/video*' to see available cameras")
+            print("4. Check if ROS camera topics are available with 'rostopic list'")
 
 if __name__ == "__main__":
     main() 
