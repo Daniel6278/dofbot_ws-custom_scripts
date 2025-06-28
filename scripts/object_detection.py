@@ -805,8 +805,8 @@ class ObjectDetector:
             print("=== Object Detection Cycle ===")
             
             # Step 1: Move to optimal viewing position
-            print("\nStep 1: Positioning robot...")
-            self.move_to_optimal_view()
+            # print("\nStep 1: Positioning robot...")
+            # self.move_to_optimal_view()
             
             # Step 2: Take photo
             print("\nStep 2: Taking photo...")
